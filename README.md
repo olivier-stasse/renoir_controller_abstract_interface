@@ -14,10 +14,10 @@ The user is expected to fill in the map of control double vector values.
 # Cloning, building and installing
 
 ```
-    mkdir -p tirrex_renoir_ws/src
-    cd tirrex_renoir_ws/src
-    git clone https://github.com/olivier-stasse/renoir_controller_abstract_interface.git
-    catkin build renoir_controller_abstract_interface
+mkdir -p tirrex_renoir_ws/src
+cd tirrex_renoir_ws/src
+git clone https://github.com/olivier-stasse/renoir_controller_abstract_interface.git
+catkin build renoir_controller_abstract_interface
 ```
 
 # Testing 
@@ -26,8 +26,8 @@ There is a simple node loading an interface and making a simple call to each abs
 (setupSetSensors, nominalSetSensors, cleanupSetSensors, getControl).
 
 ```
-    rosrun renoir_controller_abstract_interface load_renoir_controller_node ./devel/lib/librenoir_controller_example_interface.so
-```    
+rosrun renoir_controller_abstract_interface load_renoir_controller_node ./devel/lib/librenoir_controller_example_interface.so
+```
 
 The current expected output is:
 ```
