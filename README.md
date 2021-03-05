@@ -29,4 +29,13 @@ There is a simple node loading an interface and making a simple call to each abs
     rosrun renoir_controller_abstract_interface load_renoir_controller_node ./devel/lib/librenoir_controller_example_interface.so
 ```    
 
-
+The current expected output is:
+```
+Calling /home/user/tirrex_renoir_ws/devel/lib/renoir_controller_abstract_interface/load_renoir_controller_node with ./devel/lib/librenoir_controller_example_interface.so
+Tried loading 
+Succedded in loading ./devel/lib/librenoir_controller_example_interface.so
+ setupSetSensors - Size of sensorsIn:5
+ nominalSetSensors - Size of sensorsIn:5
+ cleanupSetSensors - Size of sensorsIn:5
+ getControl - Size of controlOut:5
+```
