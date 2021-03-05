@@ -52,7 +52,7 @@ public:
   virtual void
   cleanupSetSensors(std::map<std::string, SensorValues> &sensorsIn)
   {
-    std::cout << " nominalSetSensors - Size of sensorsIn:"
+    std::cout << " cleanupSetSensors - Size of sensorsIn:"
               << sensorsIn.size()
               << std::endl;
   }
@@ -67,15 +67,19 @@ public:
 };
 } // namespace renoir_controller
 
+extern "C" {
 renoir_controller::AbstractExternalInterface * createExternalInterface()
 {
-  renoir_controller::SimpleExternalInterface *aSimpExtInt =
+  /* renoir_controller::SimpleExternalInterface *aSimpExtInt =
       new renoir_controller::SimpleExternalInterface();
   
   return dynamic_cast<renoir_controller::AbstractExternalInterface *>
-      (aSimpExtInt);
+  (aSimpExtInt);*/
+  return new renoir_controller::SimpleExternalInterface();
+}
 }
 
+extern "C" {
 void destroyExternalInterface(renoir_controller::AbstractExternalInterface * anExtInt)
 {
   
@@ -86,5 +90,6 @@ void destroyExternalInterface(renoir_controller::AbstractExternalInterface * anE
   
   if (aSimpleExtInt!=nullptr)
     delete aSimpleExtInt;
+}
 }
 

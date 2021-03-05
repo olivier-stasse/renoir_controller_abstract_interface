@@ -33,14 +33,25 @@ int main(int argc, char *argv[])
     std::cerr << argv[0] << " waits two arguments" <<std::endl;
     return -1;
   }
+
+
+  std::cout << "Calling " << argv[0]
+            << " with "
+            << argv[1] << std::endl;
+
+  void * ControllerLibrary = dlopen(argv[1], RTLD_LAZY | RTLD_GLOBAL);
   
   createExternalInterface_t* createExtInt = reinterpret_cast<createExternalInterface_t*>(
-    reinterpret_cast<long>(dlsym(argv[1], "createExternalInterface")));
+    reinterpret_cast<long>(dlsym(ControllerLibrary, "createExternalInterface")));
+  
+  std::cout << "Tried loading " << std::endl;
+  
   const char* dlsym_error = dlerror();
   if (dlsym_error) {
     std::cerr << "Cannot load symbol create: " << dlsym_error << '\n';
     return -1;
   }
+  std::cout << "Succedded in loading " << argv[1] << std::endl;
 
   // Create robot-controller
   renoir_controller::AbstractExternalInterface * anExtInt;
@@ -60,5 +71,5 @@ int main(int argc, char *argv[])
     controlOut[std::to_string(i)]=aSetOfControls[i];
 
   anExtInt->getControl(controlOut);
-  
+
 }
