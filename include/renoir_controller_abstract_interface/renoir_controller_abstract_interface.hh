@@ -66,7 +66,7 @@ public:
 };
 } // namespace renoir_controller
 
-typedef std::shared_ptr<renoir_controller::AbstractExternalInterface *>
+typedef renoir_controller::AbstractExternalInterface *
 createExternalInterface_t();
 typedef void destroyExternalInterface_t(
     renoir_controller::AbstractExternalInterface *);
