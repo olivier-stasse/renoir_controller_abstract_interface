@@ -26,6 +26,64 @@
 
 #include "renoir_controller_abstract_interface.hh"
 
+typedef std::map<std::string, renoir_controller::SensorValues>
+SetOfSensorValues_t;
+
+void fillValue(SetOfSensorValues_t &lsensorsIn)
+{
+  std::size_t nbDofs = 32;
+  std::size_t nbIMUs = 1;
+  std::size_t nbForceSensors = 4;
+  std::size_t shiftid = 0;
+  std::size_t local_size = 6;
+  std::vector<double> vecOfVals[10];
+  std::vector<std::string> list_of_vec{"motor_angle","joint_angle","velocities",
+                                       "torques","motor_currents",
+                                       "temperatures","orientation",
+                                       "accelerometer",
+                                       "gyrometer","force_sensors"};
+
+  // Initialize the vector for each actuator.
+  local_size = 6;
+  for(unsigned int idvec=0; idvec<local_size;idvec++)
+  {
+    vecOfVals[idvec].resize(nbDofs);
+    for(unsigned int i=0;i<nbDofs;i++)
+    {
+      vecOfVals[idvec][i] = (double)(i+idvec*nbDofs);
+    }
+
+    lsensorsIn[list_of_vec[idvec]].setValues(vecOfVals[idvec]);
+  }
+  shiftid+=6;
+
+  // Create the vector of IMUS
+  for(unsigned int idvec = 3; idvec < 3; idvec++)
+  {
+    vecOfVals[shiftid+idvec].resize(3*nbIMUs);
+    for(unsigned int idimu=0;idimu<nbIMUs;idimu++)
+    {
+      for (unsigned int j=0;j<3;j++)
+      {
+        vecOfVals[shiftid+idvec][j+idimu*nbIMUs*3] = (double)(j+idimu*nbIMUs*3);
+      }
+    }
+    lsensorsIn[list_of_vec[shiftid+idvec]].setValues(vecOfVals[shiftid+idvec]);
+  }
+  shiftid +=3;
+
+  // Create the force sensor vector
+  vecOfVals[shiftid].resize(nbForceSensors*6);
+  for(unsigned int idvec=0;idvec<nbForceSensors;idvec++)
+  {
+    for (unsigned int j=0;j<6;j++)
+      vecOfVals[shiftid][j+idvec*6] =j+ idvec*6;
+  }
+  lsensorsIn[list_of_vec[shiftid]].setValues(vecOfVals[shiftid]);
+  shiftid ++;
+
+}
+
 int main(int argc, char *argv[])
 {
   if (argc!=2)
@@ -40,12 +98,12 @@ int main(int argc, char *argv[])
             << argv[1] << std::endl;
 
   void * ControllerLibrary = dlopen(argv[1], RTLD_LAZY | RTLD_GLOBAL);
-  
+
   createExternalInterface_t* createExtInt = reinterpret_cast<createExternalInterface_t*>(
     reinterpret_cast<long>(dlsym(ControllerLibrary, "createExternalInterface")));
-  
+
   std::cout << "Tried loading " << std::endl;
-  
+
   const char* dlsym_error = dlerror();
   if (dlsym_error) {
     std::cerr << "Cannot load symbol create: " << dlsym_error << '\n';
@@ -57,19 +115,24 @@ int main(int argc, char *argv[])
   renoir_controller::AbstractExternalInterface * anExtInt;
   anExtInt = createExtInt();
 
+  /// This program simulates the robot therefore it provides sensor values.
   std::map<std::string,renoir_controller::SensorValues> sensorsIn;
-  renoir_controller::SensorValues aSetOfSensors[5];
-  for(auto i=0;i<5;i++)
-    sensorsIn[std::to_string(i)]=aSetOfSensors[i];
+  fillValue(sensorsIn);
+
   anExtInt->setupSetSensors(sensorsIn);
   anExtInt->nominalSetSensors(sensorsIn);
   anExtInt->cleanupSetSensors(sensorsIn);
-  
+
+  /// This programs get back the control.
   std::map<std::string,renoir_controller::ControlValues> controlOut;
-  renoir_controller::ControlValues aSetOfControls[5];
-  for(auto i=0;i<5;i++)
-    controlOut[std::to_string(i)]=aSetOfControls[i];
 
   anExtInt->getControl(controlOut);
+
+  /// Display the control value.
+  const std::vector<double> & controlVec = controlOut["control"].getValues();
+  for(unsigned int i=0; i < controlVec.size(); i++)
+    std::cout << "control (" << i
+              << ")="
+              << controlVec[i] << std::endl;
 
 }

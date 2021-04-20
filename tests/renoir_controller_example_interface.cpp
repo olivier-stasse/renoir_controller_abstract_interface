@@ -15,7 +15,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
- 
+
 
 #include <map>
 #include <string>
@@ -51,7 +51,7 @@ struct Sensors {
   std::size_t nbDofs_;
   std::size_t nbForceSensors_;
   std::size_t nbIMUs_;
-  
+
   Sensors(std::size_t lNbDofs,
           std::size_t lNbForceSensors,
           std::size_t lNbIMUs)
@@ -59,8 +59,9 @@ struct Sensors {
     nbDofs_ = lNbDofs;
     nbForceSensors_ = lNbForceSensors;
     nbIMUs_ = lNbIMUs;
+    init();
   }
-  
+
   void init()
   {
     motor_angle_.resize(nbDofs_);
@@ -75,29 +76,6 @@ struct Sensors {
     temperatures_.resize(nbDofs_);
   }
 
-  void fillValue()
-  {
-    for(unsigned int i=0;i<nbDofs_;i++)
-    {
-      motor_angle_[i] = (double)i;
-      joint_angle_[i] = (double)(i+nbDofs_);
-      velocities_[i] = (double)(i+2*nbDofs_);
-      torques_[i] = (double)(i+3*nbDofs_);
-      force_sensors_[i] = (double)(i+4*nbDofs_);
-      motor_currents_[i] = (double)(i+5*nbDofs_);
-      temperatures_[i] = (double)(i+6*nbDofs_);
-    }
-    
-    for(unsigned int i=0;i<nbIMUs_;i++)
-    {
-      for (unsigned int j=0;j<3;j++)
-      {
-        orientation_[j] = (double)(j+i*nbIMUs_*3);
-        accelerometer_[j] = (double)(j+i*nbIMUs_*3);
-        gyrometer_[j] = (double)(j+i*nbIMUs_*3);
-      }
-    }    
-  }
 };
 
 
@@ -106,49 +84,104 @@ public:
 
   Sensors renoirSensorValues_;
   std::vector<double> control_;
-  
+
   SimpleExternalInterface():
-      renoirSensorValues_(30,4,1)
+      renoirSensorValues_(32,4,1)
   {
     renoirSensorValues_.init();
+    control_.resize(renoirSensorValues_.motor_angle_.size());
   }
 
   virtual ~SimpleExternalInterface() {}
 
-  void fillSensorValues(std::map<std::string, SensorValues> &sensorsIn)
+  void readSensorValues(std::map<std::string, SensorValues> &sensorsIn)
   {
-    renoirSensorValues_.fillValue();
-    sensorsIn["motor_angle"].setValues(renoirSensorValues_.motor_angle_);
-    sensorsIn["joint_angle"].setValues(renoirSensorValues_.joint_angle_);
-    sensorsIn["velocities"].setValues(renoirSensorValues_.velocities_);
-    sensorsIn["torques"].setValues(renoirSensorValues_.torques_);
-    sensorsIn["motor_currents"].setValues(renoirSensorValues_.motor_currents_);
-    sensorsIn["temperatures"].setValues(renoirSensorValues_.temperatures_);
+    renoirSensorValues_.motor_angle_ = sensorsIn["motor-angles"].getValues();
+    renoirSensorValues_.joint_angle_ = sensorsIn["joint-angles"].getValues();
+    renoirSensorValues_.velocities_ = sensorsIn["velocities"].getValues();
+    renoirSensorValues_.torques_ = sensorsIn["torques"].getValues();
+    renoirSensorValues_.motor_currents_ = sensorsIn["currents"].getValues();
+    renoirSensorValues_.temperatures_ = sensorsIn["temperatures"].getValues();
   }
-  
+
   virtual void
   setupSetSensors(std::map<std::string, SensorValues> &sensorsIn)
   {
-    fillSensorValues(sensorsIn);
+    readSensorValues(sensorsIn);
   }
 
   virtual void
   nominalSetSensors(std::map<std::string, SensorValues> &sensorsIn)
   {
-    fillSensorValues(sensorsIn);
+    readSensorValues(sensorsIn);
   }
-      
+
 
   virtual void
   cleanupSetSensors(std::map<std::string, SensorValues> &sensorsIn)
   {
-    fillSensorValues(sensorsIn);
+    readSensorValues(sensorsIn);
   }
-  
+
   virtual void
   getControl(std::map<std::string, ControlValues> &controlOut)
   {
-    controlOut["control"];
+    std::vector<double> P =
+        { 200.0, 200.0, 200.0, 200.0, 200.0, 200.0, // leg_left
+          200.0, 200.0, 200.0, 200.0, 200.0, 200.0, // leg_right
+          100.0, 100.0, // torso
+          100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, // arm_left
+          100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, // arm_right
+          100.0, 100.0 // head
+        };
+    std::vector<double> D =
+        { 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, // leg_left
+          10.0, 10.0, 10.0, 10.0, 10.0, 10.0, // leg_right
+          10.0, 10.0, // torso
+          10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, // arm_left
+          10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, // arm_right
+          10.0, 10.0 // head
+        };
+    std::vector<double> q_des =
+        {
+          -0.0003719153883155583, 0.0016525642553218331, -0.0006120915316514704,
+          -3.604434580233063e-05, -0.0013897980557870545, -0.0031180336465180744,
+          // leg_left
+
+          0.00030263030530882664, -0.005795739121500441, 0.000631813768097992,
+          0.0005462775375800402, 0.0004480349016297518, -0.0005367511345174825,
+          // leg_right
+
+          -6.071781380518884e-05, -0.005018192485418085, // torso
+
+          -8.070292333956153e-05, 0.08542050935318082, 0.0010527578233344504,
+          -0.007906152488359682, -0.0007740858999745269, 0.07921991197398072,
+          -0.0006464265245044266, // arm_left
+          2.0576993624919127e-05, // gripper_left
+
+          -0.0011334639690288304, -0.08124111133850873, -0.0009592487626945355,
+          -0.011901887779979844, 0.0007488445751869997, -0.0901025291605209,
+          -0.0019554149510241973, // arm_right
+           0.0002111823195515247, // gripper_right
+
+          0.00043208701086725187, -3.863858192553717e-06, // head
+        };
+    /// Compute a control law.
+    for(unsigned i=0; i < control_.size();i++)
+    {
+      double error =  q_des[i] - renoirSensorValues_.motor_angle_[i] ;
+      double derror = - renoirSensorValues_.velocities_[i] ;
+      control_[i] = P[i] * error + D[i] * derror;
+
+      if ( (i==21) || (i==29) || (i==30) || (i==31))
+        control_[i] = q_des[i];
+      // std::cout << "ang: " << renoirSensorValues_.motor_angle_[i]
+      //           << " control_ [" << i
+      //           << "] = " << control_[i]
+      //           << " " << error
+      //           << std::endl;
+    }
+    controlOut["control"].setValues(control_);
   }
 };
 } // namespace renoir_controller
@@ -163,14 +196,13 @@ renoir_controller::AbstractExternalInterface * createExternalInterface()
 extern "C" {
 void destroyExternalInterface(renoir_controller::AbstractExternalInterface * anExtInt)
 {
-  
+
   renoir_controller::SimpleExternalInterface *
       aSimpleExtInt =
       dynamic_cast<renoir_controller::SimpleExternalInterface *>
       (anExtInt);
-  
+
   if (aSimpleExtInt!=nullptr)
     delete aSimpleExtInt;
 }
 }
-
