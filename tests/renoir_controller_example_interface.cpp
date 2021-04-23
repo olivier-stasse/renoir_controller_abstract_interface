@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <cmath>
 
 #include "renoir_controller_abstract_interface.hh"
 
@@ -84,9 +85,13 @@ public:
 
   Sensors renoirSensorValues_;
   std::vector<double> control_;
+  double accumulated_time_;
+  double dt_;
 
   SimpleExternalInterface():
-      renoirSensorValues_(32,4,1)
+      renoirSensorValues_(32,4,1),
+      accumulated_time_(0.0),
+      dt_(0.001)
   {
     renoirSensorValues_.init();
     control_.resize(renoirSensorValues_.motor_angle_.size());
@@ -127,54 +132,48 @@ public:
   getControl(std::map<std::string, ControlValues> &controlOut)
   {
     std::vector<double> P =
-        { 200.0, 200.0, 200.0, 200.0, 200.0, 200.0, // leg_left
-          200.0, 200.0, 200.0, 200.0, 200.0, 200.0, // leg_right
-          100.0, 100.0, // torso
-          100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, // arm_left
-          100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, // arm_right
-          100.0, 100.0 // head
+        { 5000.0, 5000.0, 5000.0, 5000.0, 5000.0, 5000.0, // leg_left
+          5000.0, 5000.0, 5000.0, 5000.0, 5000.0, 5000.0, // leg_right
+          1000.0, 1000.0, // torso
+          100.0, 200.0, 50.0, 50.0, 50.0, 50.0, 50.0, // arm_left
+          100.0, 200.0, 50.0, 50.0, 50.0, 50.0, 50.0, // arm_right
+          300.0, 300.0 // head
         };
     std::vector<double> D =
-        { 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, // leg_left
-          10.0, 10.0, 10.0, 10.0, 10.0, 10.0, // leg_right
+        { 20.0, 20.0, 20.0, 20.0, 20.0, 2.0, // leg_left
+          20.0, 20.0, 20.0, 20.0, 20.0, 1.0, // leg_right
           10.0, 10.0, // torso
-          10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, // arm_left
-          10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, // arm_right
-          10.0, 10.0 // head
+          50.0, 50.0, 10.0, 1.0, 1.0, 1.0, 1.0, // arm_left
+          50.0, 50.0, 10.0, 1.0, 1.0, 1.0, 1.0, // arm_right
+          0.1,   0.1 // head
         };
     std::vector<double> q_des =
         {
-          -0.0003719153883155583, 0.0016525642553218331, -0.0006120915316514704,
-          -3.604434580233063e-05, -0.0013897980557870545, -0.0031180336465180744,
-          // leg_left
+          0.0,  0.0, -0.411354,  0.859395, -0.448041, -0.001708, // leg_left
+          0.0,  0.0, -0.411354,  0.859395, -0.448041, -0.001708, // leg_right
+          0.0 ,  0.006761, // torso
+          0.25847 ,  0.173046, -0.0002, -0.525366, 0.0, -0.0,  0.1,   // arm_left
+          0.0, // gripper_left
+          -0.25847 , -0.173046, 0.0002  , -0.525366, 0.0,  0.0,  0.1, // arm_right
+          0.0, // gripper_right
+          0.0, 0.0 // head
 
-          0.00030263030530882664, -0.005795739121500441, 0.000631813768097992,
-          0.0005462775375800402, 0.0004480349016297518, -0.0005367511345174825,
-          // leg_right
-
-          -6.071781380518884e-05, -0.005018192485418085, // torso
-
-          -8.070292333956153e-05, 0.08542050935318082, 0.0010527578233344504,
-          -0.007906152488359682, -0.0007740858999745269, 0.07921991197398072,
-          -0.0006464265245044266, // arm_left
-          2.0576993624919127e-05, // gripper_left
-
-          -0.0011334639690288304, -0.08124111133850873, -0.0009592487626945355,
-          -0.011901887779979844, 0.0007488445751869997, -0.0901025291605209,
-          -0.0019554149510241973, // arm_right
-           0.0002111823195515247, // gripper_right
-
-          0.00043208701086725187, -3.863858192553717e-06, // head
         };
     /// Compute a control law.
     for(unsigned i=0; i < control_.size();i++)
     {
       double error =  q_des[i] - renoirSensorValues_.motor_angle_[i] ;
+      if ( i==17)
+      {
+        error = (q_des[i] + sin(accumulated_time_)*0.087) -
+            renoirSensorValues_.motor_angle_[i];
+      }
       double derror = - renoirSensorValues_.velocities_[i] ;
       control_[i] = P[i] * error + D[i] * derror;
 
       if ( (i==21) || (i==29) || (i==30) || (i==31))
         control_[i] = q_des[i];
+
       // std::cout << "ang: " << renoirSensorValues_.motor_angle_[i]
       //           << " control_ [" << i
       //           << "] = " << control_[i]
@@ -182,6 +181,7 @@ public:
       //           << std::endl;
     }
     controlOut["control"].setValues(control_);
+    accumulated_time_ += dt_;
   }
 };
 } // namespace renoir_controller
