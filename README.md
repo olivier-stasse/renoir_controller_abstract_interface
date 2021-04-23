@@ -31,11 +31,68 @@ rosrun renoir_controller_abstract_interface load_renoir_controller_node ./devel/
 
 The current expected output is:
 ```
-Calling /home/user/tirrex_renoir_ws/devel/lib/renoir_controller_abstract_interface/load_renoir_controller_node with ./devel/lib/librenoir_controller_example_interface.so
+Calling ./install/lib/renoir_controller_abstract_interface/load_renoir_controller_node with ./install/lib/librenoir_controller_example_interface.so
 Tried loading 
-Succedded in loading ./devel/lib/librenoir_controller_example_interface.so
- setupSetSensors - Size of sensorsIn:5
- nominalSetSensors - Size of sensorsIn:5
- cleanupSetSensors - Size of sensorsIn:5
- getControl - Size of controlOut:5
+Succedded in loading ./install/lib/librenoir_controller_example_interface.so
+control (0)=-1280
+control (1)=-1300
+control (2)=-3376.77
+control (3)=2956.98
+control (4)=-3600.2
+control (5)=-146.54
+control (6)=-1400
+control (7)=-1420
+control (8)=-3496.77
+control (9)=2836.98
+control (10)=-3720.2
+control (11)=-83.54
+control (12)=-760
+control (13)=-763.239
+control (14)=-3874.15
+control (15)=-3915.39
+control (16)=-800.01
+control (17)=-107.268
+control (18)=-82
+control (19)=-83
+control (20)=-79
+control (21)=0
+control (22)=-4351.69
+control (23)=-878.652
+control (24)=-87.99
+control (25)=-115.268
+control (26)=-90
+control (27)=-91
+control (28)=20.8
+control (29)=0
+control (30)=0
+control (31)=0
 ```
+
+# Testing with the PAL simulator
+
+To start the PAL simulator:
+```
+roslaunch talos_pal_physics_simulator talos_pal_physics_simulator_with_actuators.launch robot:=full_v2 headless:=false speedrun:=false
+```
+The robot starts with a straight position.
+It can be problematic as the robot is near a singularity.
+In another terminal:
+```
+roslaunch talos_controller_configuration position_controllers.launch
+```
+
+In a third terminal, you need to first load the half sitting position:
+```
+rosparam load ./src/renoir_pal_controller_interface/config/half_sitting.yaml
+```
+Once this is done the following line makes the robot moves from the straight position to the half-sitting position:
+```
+rostopic pub /play_motion/goal play_motion_msgs/PlayMotionActionGoal '[1, now, nope]' '[now,nope]' '[half_sitting,True,0]'
+```
+
+Finally when the robot has reached this position, you can stop the position controller with CTRL+C, and then
+launch your controller:
+```
+roslaunch renoir_pal_controller_interface renoir_controller_effort.launch
+```
+
