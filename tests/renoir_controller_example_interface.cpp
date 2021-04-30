@@ -23,7 +23,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "renoir_controller_abstract_interface.hh"
+#include "renoir_controller_abstract_interface/renoir_controller_abstract_interface.hh"
 
 namespace renoir_controller {
 
