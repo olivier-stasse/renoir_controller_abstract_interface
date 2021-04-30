@@ -25,7 +25,7 @@
 #include <dlfcn.h>
 
 #include "renoir_controller_abstract_interface/renoir_controller_abstract_interface.hh"
-<
+
 typedef std::map<std::string, renoir_controller::SensorValues>
 SetOfSensorValues_t;
 
