@@ -24,8 +24,8 @@
 // POSIX.1-2001
 #include <dlfcn.h>
 
-#include "renoir_controller_abstract_interface.hh"
-
+#include "renoir_controller_abstract_interface/renoir_controller_abstract_interface.hh"
+<
 typedef std::map<std::string, renoir_controller::SensorValues>
 SetOfSensorValues_t;
 
