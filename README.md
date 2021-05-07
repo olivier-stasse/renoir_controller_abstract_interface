@@ -20,6 +20,7 @@ git clone https://github.com/olivier-stasse/renoir_controller_abstract_interface
 catkin build renoir_controller_abstract_interface
 ```
 
+
 # Testing 
 
 There is a simple node loading an interface and making a simple call to each abstract method 
@@ -68,17 +69,88 @@ control (30)=0
 control (31)=0
 ```
 
+# Docker (to use the package renoir_pal_controller_interface)
+
+To get the docker file:
+```
+docker pull registry.gitlab.com/pal-robotics/tirrex/dockers/talos_pal_physics_simulator_vnc_renoir:latest
+```
+
+To start the docker image:
+```
+docker run --rm -it -p 6080:6080 registry.gitlab.com/pal-robotics/tirrex/dockers/talos_pal_physics_simulator_vnc_renoir:latest
+```
+
+The output displayed in the terminal is:
+```
+Please be aware that you are exposing your VNC server to all users on the
+local machine. These users can access your server without authentication!
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+
+New '0080c85e41cf:1 (root)' desktop at :1 on machine 0080c85e41cf
+
+Starting applications specified in /root/.vnc/xstartup
+Log file is /root/.vnc/0080c85e41cf:1.log
+
+Use xtigervncviewer -SecurityTypes None :1 to connect to the VNC server.
+
+Warning: could not find self.pem
+Starting webserver and WebSockets proxy on port 6080
+WebSocket server settings:
+  - Listen on :6080
+  - Flash security policy server
+  - Web server. Web root: /usr/share/novnc
+  - No SSL/TLS support (no cert file)
+  - proxying from :6080 to localhost:5901
+
+
+Navigate to this URL:
+
+    http://localhost:6080/vnc.html?host=localhost&port=6080
+
+Press Ctrl-C to exit
+```
+
+To start accessing the linux X-Window system open your navigator and copy paste the URL given in the previous terminal output (here http://localhost:6080/vnc.html?host=localhost&port=6080)
+
+This should display the following image:
+![novnc image](./doc/novnc.jpg)
+
+Clic on connect on the upper right corner to access the linux X-Window system and get the following input:
+![xfce image](./doc/xfce_0.jpg)
+
+
 # Testing with the PAL simulator
 
-To start the PAL simulator:
+## To start the PAL simulator:
 ```
-roslaunch talos_pal_physics_simulator talos_pal_physics_simulator_with_actuators.launch robot:=full_v2 headless:=false speedrun:=false
+roslaunch talos_pal_physics_simulator talos_pal_physics_simulator_with_actuators_wo_rviz.launch robot:=full_v2 headless:=false speedrun:=false
 ```
+or it is possible to use the following alias:
+```
+start_renoir
+```
+
+## To display the robot from the simulator:
+```
+rosrun rviz rviz -d /opt/pal/ferrum/share/talos_pal_physics_simulator/config/rviz/
+```
+or it is possible to use the following alias:
+```
+start_renoir_rviz
+```
+
+## Half sitting starting position
 The robot starts with a straight position.
 It can be problematic as the robot is near a singularity.
+It is necessary to put it in a specific configuration.
 In another terminal:
 ```
 roslaunch talos_controller_configuration position_controllers.launch
+```
+or
+```
+start_pos_ctrl
 ```
 
 In a third terminal, you need to first load the half sitting position:
@@ -90,9 +162,18 @@ Once this is done the following line makes the robot moves from the straight pos
 rostopic pub /play_motion/goal play_motion_msgs/PlayMotionActionGoal '[1, now, nope]' '[now,nope]' '[half_sitting,True,0]'
 ```
 
+The two previous action are launched by the following alias:
+```
+launch_half_sitting
+```
+
+## Starting your controller
 Finally when the robot has reached this position, you can stop the position controller with CTRL+C, and then
 launch your controller:
 ```
 roslaunch renoir_pal_controller_interface renoir_controller_effort.launch
 ```
+
+The result is depicted in the following image
+![simulation image](./doc/simulation_pal_physics_simulator.jpg)
 
