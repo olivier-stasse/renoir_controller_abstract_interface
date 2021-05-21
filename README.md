@@ -120,6 +120,14 @@ Clic on connect on the upper right corner to access the linux X-Window system an
 ![xfce image](./doc/xfce_0.jpg)
 
 
+# Preparing the environment
+
+The current version of the docker does not use the install directory by default.
+This has to be done for renoir_controller_abstract_interface, and can be set easily with:
+```
+catkin config --install
+```
+
 # Testing with the PAL simulator
 
 ## To start the PAL simulator:
